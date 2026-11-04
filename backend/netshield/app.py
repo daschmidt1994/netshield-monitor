@@ -120,7 +120,7 @@ def create_app(settings: Settings | None = None, *, start_collectors: bool = Tru
         log.exception("unhandled error")
         return JSONResponse({"detail": "internal error"}, status_code=500)
 
-    if (STATIC_DIR / "index.html").exists():
+    if (STATIC_DIR / "index.html").exists() and (STATIC_DIR / "assets").is_dir():
         app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
 
         @app.get("/{path:path}", include_in_schema=False)
