@@ -27,6 +27,8 @@
     <string name="traffic">Traffic-Verlauf</string>
     <string name="top_countries">Häufigste Herkunftsländer</string>
     <string name="geo_approx">GeoIP-Standorte sind ungefähre Angaben und nicht zwingend der Standort einer Person.</string>
+    <string name="map_zoom_hint">Mit zwei Fingern zoomen, gezoomt mit einem Finger verschieben, Doppeltippen zoomt hinein bzw. zurück.</string>
+    <string name="top_countries_legend">Zahlen: alle Anfragen / davon blockiert</string>
     <string name="no_data">Keine Daten im Zeitraum</string>
     <string name="domains">Domains</string>
     <string name="total">Gesamt</string>

@@ -2,6 +2,14 @@
 
 All notable changes are documented here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.1.2] – 2026-11-04
+
+### Added
+- Android: world map supports pinch-to-zoom, panning while zoomed and double-tap zoom/reset; legend for the
+  "all / blocked" numbers in the country list.
+- Optional remote CrowdSec metrics: `docker/crowdsec-bridge/docker-compose.metrics.yml` exposes `:6060` via the
+  NetBird IP (`:18081`).
+
 ## [0.1.1] – 2026-11-04
 
 ### Fixed

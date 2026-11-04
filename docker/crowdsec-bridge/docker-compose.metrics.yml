@@ -1,0 +1,51 @@
+# Optional: also expose CrowdSec's Prometheus metrics (container-internal :6060) to a remote NetShield.
+#   docker compose -f docker-compose.yml -f docker-compose.metrics.yml up -d
+#
+# crowdsec-metrics-relay joins the CrowdSec Docker network and publishes 127.0.0.1:16060 -> crowdsec:6060.
+# crowdsec-metrics-bridge then forwards <NetBird IP>:18081 -> 127.0.0.1:16060 (same pattern as the LAPI bridge).
+# The CrowdSec container is not modified. Allow TCP 18081 in the NetBird policy as well.
+services:
+  crowdsec-metrics-relay:
+    image: alpine/socat:1.8.1.3
+    container_name: crowdsec-metrics-relay
+    restart: unless-stopped
+    networks: [crowdsec]
+    ports:
+      - "127.0.0.1:16060:6060"
+    command: ["-d", "TCP-LISTEN:6060,fork,reuseaddr", "TCP:${CROWDSEC_METRICS_TARGET:-crowdsec:6060}"]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 32M
+
+  crowdsec-metrics-bridge:
+    image: alpine/socat:1.8.1.3
+    container_name: crowdsec-metrics-bridge
+    restart: unless-stopped
+    network_mode: host
+    env_file: .env
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          socat -d TCP-LISTEN:$${METRICS_BRIDGE_PORT:-18081},bind=$${NETBIRD_IP:?set NETBIRD_IP},fork,reuseaddr TCP:127.0.0.1:16060
+          echo "bind to $${NETBIRD_IP}:$${METRICS_BRIDGE_PORT:-18081} failed (NetBird not up yet?) - retrying in 10 s"
+          sleep 10
+        done
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 32M
+
+networks:
+  crowdsec:
+    external: true
+    name: ${CROWDSEC_NETWORK:-netbird_netbird}
