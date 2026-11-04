@@ -5,6 +5,7 @@ import io.github.daschmidt1994.netshield.data.RangeKey
 import io.github.daschmidt1994.netshield.data.TimeRange
 import io.github.daschmidt1994.netshield.data.json
 import io.github.daschmidt1994.netshield.ui.components.CountryShape
+import io.github.daschmidt1994.netshield.ui.components.MapViewport
 import io.github.daschmidt1994.netshield.ui.components.WorldData
 import io.github.daschmidt1994.netshield.ui.components.fmtDuration
 import org.junit.Assert.assertEquals
@@ -22,6 +23,32 @@ class LogicTest {
         val square = CountryShape("XX", listOf(floatArrayOf(0f, 0f, 10f, 0f, 10f, 10f, 0f, 10f, 0f, 0f)))
         assertTrue(WorldData.contains(square, 5f, 5f))
         assertFalse(WorldData.contains(square, 15f, 5f))
+    }
+
+    @Test fun mapZoomKeepsGestureCentreInPlace() {
+        val v = MapViewport().transform(centroidX = 50f, centroidY = 25f, zoom = 2f, panX = 0f, panY = 0f,
+            width = 100f, height = 50f)
+        assertEquals(2f, v.scale, 0.001f)
+        assertEquals(-50f, v.offsetX, 0.001f)
+        assertEquals(-25f, v.offsetY, 0.001f)
+        val (x, y) = v.toContent(50f, 25f)
+        assertEquals(50f, x, 0.001f)
+        assertEquals(25f, y, 0.001f)
+    }
+
+    @Test fun mapZoomIsClampedToVisibleWorld() {
+        val out = MapViewport().transform(10f, 10f, 0.5f, 30f, 30f, 100f, 50f)
+        assertEquals(MapViewport(), out)
+        val panned = MapViewport(scale = 2f).transform(0f, 0f, 1f, -500f, -500f, 100f, 50f)
+        assertEquals(-100f, panned.offsetX, 0.001f)
+        assertEquals(-50f, panned.offsetY, 0.001f)
+        assertEquals(MapViewport.MAX_SCALE, MapViewport().transform(0f, 0f, 100f, 0f, 0f, 100f, 50f).scale, 0.001f)
+    }
+
+    @Test fun mapDoubleTapZoomsInAndResets() {
+        val zoomed = MapViewport().toggleZoom(50f, 25f, 100f, 50f)
+        assertEquals(MapViewport.DOUBLE_TAP_SCALE, zoomed.scale, 0.001f)
+        assertEquals(MapViewport(), zoomed.toggleZoom(10f, 10f, 100f, 50f))
     }
 
     @Test fun durations() {
