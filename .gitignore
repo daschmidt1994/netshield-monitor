@@ -12,7 +12,7 @@ google-services.json
 secrets/
 
 # Data
-data/
+/data/
 *.db
 *.sqlite*
 *.mmdb
