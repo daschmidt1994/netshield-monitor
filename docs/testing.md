@@ -4,7 +4,7 @@
 
 | Component | Tests | Command |
 |---|---|---|
-| Backend | 26 pytest tests (collectors with recorded API shapes, stats, auth/CSRF/tokens, rate limit, XFF trust, notifier) | `cd backend && pip install -e .[dev] && pytest` |
+| Backend | 27 pytest tests, run against SQLite **and PostgreSQL 18** (`NETSHIELD_TEST_DATABASE_URL=postgresql+asyncpg://…`) (collectors with recorded API shapes, stats, auth/CSRF/tokens, rate limit, XFF trust, notifier) | `cd backend && pip install -e .[dev] && pytest` |
 | Web UI | TypeScript strict build | `cd web && npm ci && npm run build` |
 | Home Assistant | 7 tests with `pytest-homeassistant-custom-component` (HA 2026.2.3): config/options/reauth flow, entities, events, offline, diagnostics redaction | `pytest -c pytest-ha.ini` |
 | Android | 4 JVM unit tests; debug and release (R8) builds | `cd android && ./gradlew testDebugUnitTest assembleDebug assembleRelease` |
@@ -28,6 +28,6 @@
 - ⚠️ **Android app on a real device or emulator** (the build machine had too little RAM for an emulator).
   The app compiles, unit tests pass, API models were tested against real JSON shapes.
 - ⚠️ Home Assistant integration inside a running Home Assistant instance (only the official test harness).
-- ⚠️ PostgreSQL backend (`examples/docker-compose.postgres.yml`) – SQLite is the tested default.
 - ⚠️ ntfy delivery against a real ntfy server (unit-tested with a mocked HTTP endpoint).
+- ⚠️ Remote setup via the CrowdSec LAPI bridge (`docs/remote-setup.md`) – not yet run end-to-end.
 - ⚠️ GitHub workflows (CI, hassfest, HACS validation, release) – they run on the first push.

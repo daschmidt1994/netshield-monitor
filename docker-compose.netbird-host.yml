@@ -1,0 +1,13 @@
+# Override for running NetShield on the same host as NetBird + CrowdSec:
+# joins their Docker network so http://crowdsec:8080 and http://crowdsec:6060 are reachable.
+#   docker compose -f docker-compose.yml -f docker-compose.netbird-host.yml up -d
+services:
+  netshield:
+    networks:
+      - default
+      - netbird
+
+networks:
+  netbird:
+    external: true
+    name: ${NETSHIELD_EXTERNAL_NETWORK:-netbird_netbird}

@@ -1,7 +1,7 @@
 # Installation / Erstkonfiguration
 
-This guide assumes the common setup: NetBird (self-hosted, combined server) and CrowdSec run as Docker
-containers on the same host, and NetShield Monitor is added next to them.
+This guide covers NetShield on the **same host** as NetBird and CrowdSec. To run it on another machine
+(e.g. a home server/Unraid) and reach CrowdSec through NetBird, see **[remote-setup.md](remote-setup.md)**.
 *Die Anleitung ist auf Englisch; alle Befehle sind identisch.*
 
 ## 0. Requirements
@@ -25,7 +25,8 @@ Edit `.env`:
 
 - `NETSHIELD_NETBIRD_URL` – your NetBird management/dashboard URL, e.g. `https://netbird.example.com`
 - `NETSHIELD_EXTERNAL_NETWORK` – the Docker network of your NetBird/CrowdSec stack (`docker network ls`; the
-  official combined setup uses `netbird_netbird`). NetShield joins it to reach `crowdsec:8080` and `crowdsec:6060`.
+  official combined setup uses `netbird_netbird`). With `docker-compose.netbird-host.yml` NetShield joins it to
+  reach `crowdsec:8080` and `crowdsec:6060`.
 - `NETSHIELD_TIMEZONE` – used for "today" and daily visitor counts.
 
 ## 2. NetBird: service user + personal access token
@@ -79,10 +80,10 @@ web UI (Settings) to verify.
 ## 5. Start
 
 ```bash
-touch secrets/ntfy_token                 # must exist, may be empty
+touch secrets/ntfy_token secrets/database_url   # must exist, may be empty (empty database_url = SQLite)
 chmod 644 secrets/*                      # container runs as uid 10001 and must read them;
                                          # the secrets/ directory itself stays 700 for other host users
-docker compose up -d
+docker compose -f docker-compose.yml -f docker-compose.netbird-host.yml up -d
 docker compose exec netshield netshield create-admin
 docker compose exec netshield netshield check
 ```
@@ -133,5 +134,5 @@ The SQLite database lives in the `netshield_data` volume and survives restarts a
 
 ## PostgreSQL (optional)
 
-For larger installations see [`examples/docker-compose.postgres.yml`](../examples/docker-compose.postgres.yml) and set
-`NETSHIELD_DATABASE_URL=postgresql+asyncpg://…`.
+Put `postgresql+asyncpg://user:password@host:5432/db` into `secrets/database_url` (an existing server works), or start one
+with [`examples/docker-compose.postgres.yml`](../examples/docker-compose.postgres.yml). Tested with PostgreSQL 18.

@@ -1,5 +1,9 @@
-# NetShield Monitor – default deployment next to NetBird + CrowdSec.
-# 1. cp .env.example .env   2. put secrets into ./secrets/ (see docs/installation.md)   3. docker compose up -d
+# NetShield Monitor
+#   cp .env.example .env  ·  put secrets into ./secrets/ (see docs/installation.md)  ·  docker compose up -d
+#
+# Runs on any Docker host. If NetShield runs on the same host as NetBird/CrowdSec, add the
+# override that joins their Docker network:
+#   docker compose -f docker-compose.yml -f docker-compose.netbird-host.yml up -d
 services:
   netshield:
     image: ghcr.io/daschmidt1994/netshield-monitor:latest
@@ -10,24 +14,23 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
+      NETSHIELD_DATABASE_URL_FILE: /run/secrets/database_url
       NETSHIELD_NETBIRD_TOKEN_FILE: /run/secrets/netbird_token
       NETSHIELD_CROWDSEC_BOUNCER_KEY_FILE: /run/secrets/crowdsec_bouncer_key
       NETSHIELD_CROWDSEC_MACHINE_PASSWORD_FILE: /run/secrets/crowdsec_machine_password
       NETSHIELD_NTFY_TOKEN_FILE: /run/secrets/ntfy_token
     secrets:
+      - database_url
       - netbird_token
       - crowdsec_bouncer_key
       - crowdsec_machine_password
       - ntfy_token
     volumes:
       - netshield_data:/data
-    # Only reachable from the host by default. Publish it through the NetBird reverse proxy
-    # (recommended) or another TLS-terminating proxy instead of opening the port publicly.
+    # 127.0.0.1 by default. On a home server set NETSHIELD_BIND to the LAN IP (or 0.0.0.0) to reach the UI
+    # from your network; publish it to the internet only through a TLS proxy (e.g. a NetBird service).
     ports:
-      - "127.0.0.1:${NETSHIELD_PORT:-8090}:8080"
-    networks:
-      - default
-      - netbird
+      - "${NETSHIELD_BIND:-127.0.0.1}:${NETSHIELD_PORT:-8090}:8080"
     read_only: true
     tmpfs:
       - /tmp
@@ -40,6 +43,9 @@ services:
           memory: 512M
 
 secrets:
+  # Empty file = not used (database_url empty → built-in SQLite in the data volume).
+  database_url:
+    file: ./secrets/database_url
   netbird_token:
     file: ./secrets/netbird_token
   crowdsec_bouncer_key:
@@ -52,9 +58,3 @@ secrets:
 volumes:
   netshield_data:
     name: netshield_data   # fixed name, independent of the directory/project name
-
-networks:
-  # The Docker network of your NetBird/CrowdSec stack (to reach crowdsec:8080 / crowdsec:6060).
-  netbird:
-    external: true
-    name: ${NETSHIELD_EXTERNAL_NETWORK:-netbird_netbird}

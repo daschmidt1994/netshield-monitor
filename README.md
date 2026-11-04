@@ -33,7 +33,7 @@ git clone https://github.com/daschmidt1994/netshield-monitor.git
 cd netshield-monitor
 cp .env.example .env          # NETSHIELD_NETBIRD_URL usw. anpassen
 mkdir -p secrets              # Zugangsdaten als Dateien ablegen (siehe docs/installation.md)
-docker compose up -d
+docker compose up -d          # auf dem NetBird-Host: -f docker-compose.yml -f docker-compose.netbird-host.yml
 docker compose exec netshield netshield create-admin
 docker compose exec netshield netshield check   # testet alle Datenquellen
 ```
@@ -49,7 +49,7 @@ Danach ist die Oberfläche unter `http://127.0.0.1:8090` erreichbar. Für den Zu
 
 ### Dokumentation
 
-[Installation](docs/installation.md) · [Architektur](docs/architecture.md) · [Datenquellen & Grenzen](docs/data-sources.md) · [API](docs/api.md) · [Home Assistant](docs/home-assistant.md) · [Android](docs/android.md) · [Datenschutz](docs/privacy.md) · [Tests](docs/testing.md) · [Screenshots](docs/screenshots.md)
+[Installation](docs/installation.md) · [Betrieb zuhause/Unraid](docs/remote-setup.md) · [Architektur](docs/architecture.md) · [Datenquellen & Grenzen](docs/data-sources.md) · [API](docs/api.md) · [Home Assistant](docs/home-assistant.md) · [Android](docs/android.md) · [Datenschutz](docs/privacy.md) · [Tests](docs/testing.md) · [Screenshots](docs/screenshots.md)
 
 ---
 
@@ -72,12 +72,12 @@ git clone https://github.com/daschmidt1994/netshield-monitor.git
 cd netshield-monitor
 cp .env.example .env          # adjust NETSHIELD_NETBIRD_URL etc.
 mkdir -p secrets              # put credentials into files (see docs/installation.md)
-docker compose up -d
+docker compose up -d          # on the NetBird host: -f docker-compose.yml -f docker-compose.netbird-host.yml
 docker compose exec netshield netshield create-admin
 docker compose exec netshield netshield check   # verifies all data sources
 ```
 
-The UI is then available at `http://127.0.0.1:8090`. Publish it through a NetBird reverse proxy service (ideally *NetBird-only*) instead of opening a port. Full guide: **[docs/installation.md](docs/installation.md)**.
+The UI is then available at `http://127.0.0.1:8090`. Publish it through a NetBird reverse proxy service (ideally *NetBird-only*) instead of opening a port. Full guide: **[docs/installation.md](docs/installation.md)** · running on another machine (home server/Unraid): **[docs/remote-setup.md](docs/remote-setup.md)**.
 
 ### Requirements
 

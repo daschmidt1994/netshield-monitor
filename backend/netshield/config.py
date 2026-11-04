@@ -16,6 +16,7 @@ from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 _SECRET_FIELDS = (
+    "database_url",  # may contain the PostgreSQL password
     "netbird_token",
     "crowdsec_bouncer_key",
     "crowdsec_machine_password",

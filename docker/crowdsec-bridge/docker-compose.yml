@@ -1,0 +1,34 @@
+# CrowdSec LAPI bridge – run this on the NetBird/CrowdSec host when NetShield Monitor runs elsewhere
+# (e.g. a home server) and reaches CrowdSec through the NetBird tunnel.
+#
+# It forwards <NetBird IP of this host>:18080 → 127.0.0.1:8080 (the LAPI port published on localhost).
+# The CrowdSec container itself is not modified. If the NetBird interface is not up yet (boot), only this
+# bridge waits and retries – CrowdSec and the NetBird proxy are unaffected.
+#
+#   cp .env.example .env   # set NETBIRD_IP
+#   docker compose up -d
+#
+# Restrict access with a NetBird access policy: only the NetShield peer → this peer, TCP 18080.
+services:
+  crowdsec-bridge:
+    image: alpine/socat:1.8.1.3
+    container_name: crowdsec-lapi-bridge
+    restart: unless-stopped
+    network_mode: host
+    env_file: .env
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          socat -d TCP-LISTEN:$${BRIDGE_PORT:-18080},bind=$${NETBIRD_IP:?set NETBIRD_IP},fork,reuseaddr TCP:$${LAPI_TARGET:-127.0.0.1:8080}
+          echo "bind to $${NETBIRD_IP}:$${BRIDGE_PORT:-18080} failed (NetBird not up yet?) - retrying in 10 s"
+          sleep 10
+        done
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 32M

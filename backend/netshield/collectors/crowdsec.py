@@ -64,6 +64,17 @@ class LapiClient:
             raise CollectorError(f"CrowdSec LAPI error {r.status_code} on /v1/decisions")
         return r.json() or []
 
+    async def decisions_stream(self, startup: bool) -> dict:
+        """Incremental decision feed (``new``/``deleted`` since the previous pull of this bouncer)."""
+        key = self.settings.crowdsec_bouncer_key.get_secret_value() if self.settings.crowdsec_bouncer_key else ""
+        r = await self._request("GET", "/v1/decisions/stream", headers={"X-Api-Key": key},
+                                params={"startup": "true" if startup else "false"})
+        if r.status_code in (401, 403):
+            raise CollectorError("CrowdSec rejected the bouncer key – check NETSHIELD_CROWDSEC_BOUNCER_KEY")
+        if r.status_code >= 400:
+            raise CollectorError(f"CrowdSec LAPI error {r.status_code} on /v1/decisions/stream")
+        return r.json() or {}
+
     async def _login(self) -> str:
         if self._jwt and time.time() < self._jwt_exp - 60:
             return self._jwt
@@ -242,10 +253,32 @@ class CrowdsecDecisionsCollector(Collector):
         self.client = client or LapiClient(settings)
         self.policy = IpPolicy(settings.ip_mode, settings.ipv4_prefix, settings.ipv6_prefix,
                                settings.internal_networks)
+        # id -> (origin, type); filled from the incremental stream when no metrics endpoint is available
+        self._active: dict[int, tuple[str, str]] | None = None
 
     @property
     def enabled(self) -> bool:
         return self.settings.crowdsec_decisions_enabled
+
+    async def _counts_from_stream(self) -> Counter:
+        """Keeps decision totals up to date with the incremental stream, so community blocklists
+        (tens of thousands of entries) are transferred once instead of on every poll – important when
+        the LAPI is reached remotely over a tunnel."""
+        startup = self._active is None
+        try:
+            data = await self.client.decisions_stream(startup)
+        except CollectorError:
+            self._active = None  # resync from scratch next time
+            raise
+        active = {} if startup else self._active
+        for d in data.get("deleted") or []:
+            if d.get("id") is not None:
+                active.pop(int(d["id"]), None)
+        for d in data.get("new") or []:
+            if d.get("id") is not None:
+                active[int(d["id"])] = (d.get("origin") or "unknown", d.get("type") or "unknown")
+        self._active = active
+        return Counter(active.values())
 
     async def run_once(self) -> int:
         now = now_ts()
@@ -266,7 +299,8 @@ class CrowdsecDecisionsCollector(Collector):
                 decisions = await self.client.decisions()
                 counts.clear()
         else:
-            decisions = await self.client.decisions()
+            counts = await self._counts_from_stream()
+            decisions = await self.client.decisions(sorted(local_origins))
         count_from_list = not counts
         local_rows = []
         for d in decisions:

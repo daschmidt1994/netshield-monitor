@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 from datetime import UTC, datetime
 
@@ -36,7 +37,8 @@ def make_event(i: int, ts: float, *, host="app.example.com", path="/", status=20
 @pytest.fixture
 def settings(tmp_path) -> Settings:
     return Settings(
-        database_url=f"sqlite+aiosqlite:///{tmp_path}/test.db",
+        # set NETSHIELD_TEST_DATABASE_URL=postgresql+asyncpg://… to run the suite against PostgreSQL
+        database_url=os.environ.get("NETSHIELD_TEST_DATABASE_URL") or f"sqlite+aiosqlite:///{tmp_path}/test.db",
         netbird_url="https://netbird.example.com",
         netbird_token="nbp_test",  # noqa: S106
         crowdsec_lapi_url="http://crowdsec.test:8080",
@@ -48,6 +50,20 @@ def settings(tmp_path) -> Settings:
         timezone="Europe/Vienna",
         rate_limit_per_minute=1000,
     )
+
+
+@pytest.fixture(autouse=True)
+async def _fresh_postgres():
+    """Each test starts with an empty schema when running against PostgreSQL."""
+    url = os.environ.get("NETSHIELD_TEST_DATABASE_URL")
+    if url:
+        from netshield.database.models import Base
+
+        d = Database(url)
+        async with d.engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+        await d.dispose()
+    yield
 
 
 @pytest.fixture

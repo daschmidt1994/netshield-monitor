@@ -179,3 +179,32 @@ def test_prometheus_parser():
     vals = parse_prometheus(METRICS)
     assert vals[("cs_active_decisions", "origin=CAPI,action=ban")] == 15066
     assert vals[("cs_appsec_block_total", "")] == 3
+
+
+@respx.mock
+async def test_crowdsec_decisions_stream_without_metrics(db, settings):
+    settings.crowdsec_metrics_url = None
+    stream = respx.get(f"{CS}/v1/decisions/stream").mock(side_effect=[
+        httpx.Response(200, json={"new": [
+            {"id": 1, "origin": "CAPI", "type": "ban", "scope": "Ip", "value": "198.51.100.1", "duration": "1h"},
+            {"id": 2, "origin": "lists", "type": "captcha", "scope": "Ip", "value": "198.51.100.2", "duration": "1h"},
+            {"id": 3, "origin": "crowdsec", "type": "ban", "scope": "Ip", "value": "203.0.113.7", "duration": "1h"},
+        ], "deleted": []}),
+        httpx.Response(200, json={"new": [
+            {"id": 4, "origin": "CAPI", "type": "ban", "scope": "Ip", "value": "198.51.100.4", "duration": "1h"},
+        ], "deleted": [{"id": 1, "origin": "CAPI", "type": "ban"}]}),
+    ])
+    local = respx.get(f"{CS}/v1/decisions").mock(return_value=httpx.Response(200, json=[
+        {"id": 3, "origin": "crowdsec", "type": "ban", "scope": "Ip", "value": "203.0.113.7",
+         "scenario": "x", "duration": "59m"}]))
+    col = CrowdsecDecisionsCollector(db, settings, LapiClient(settings))
+    assert await col.run_safe() == 1
+    assert stream.calls[0].request.url.params["startup"] == "true"
+    assert "crowdsec" in local.calls[0].request.url.params["origins"]
+    await col.run_safe()
+    assert stream.calls[1].request.url.params["startup"] == "false"
+    async with db.session() as s:
+        latest = (await s.execute(select(func.max(DecisionCount.ts)))).scalar()
+        counts = {(c.origin, c.type): c.count for c in (await s.execute(
+            select(DecisionCount).where(DecisionCount.ts == latest))).scalars()}
+    assert counts == {("CAPI", "ban"): 1, ("lists", "captcha"): 1, ("crowdsec", "ban"): 1}
