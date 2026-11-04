@@ -1,5 +1,6 @@
 package io.github.daschmidt1994.netshield
 
+import io.github.daschmidt1994.netshield.data.AppUpdate
 import io.github.daschmidt1994.netshield.data.Overview
 import io.github.daschmidt1994.netshield.data.RangeKey
 import io.github.daschmidt1994.netshield.data.TimeRange
@@ -49,6 +50,26 @@ class LogicTest {
         val zoomed = MapViewport().toggleZoom(50f, 25f, 100f, 50f)
         assertEquals(MapViewport.DOUBLE_TAP_SCALE, zoomed.scale, 0.001f)
         assertEquals(MapViewport(), zoomed.toggleZoom(10f, 10f, 100f, 50f))
+    }
+
+    @Test fun updateVersionComparison() {
+        assertTrue(AppUpdate.isNewer("v0.1.3", "0.1.2"))
+        assertTrue(AppUpdate.isNewer("v0.2.0", "v0.1.10"))
+        assertTrue(AppUpdate.isNewer("1.0.0", "0.9.9-debug"))
+        assertFalse(AppUpdate.isNewer("v0.1.2", "v0.1.2"))
+        assertFalse(AppUpdate.isNewer("v0.1.1", "0.1.2"))
+        assertFalse(AppUpdate.isNewer("garbage", "0.1.2"))
+    }
+
+    @Test fun updateParsesLatestReleaseApk() {
+        val r = AppUpdate.parseRelease("""
+            {"tag_name":"v0.1.3","html_url":"https://github.com/x/y/releases/tag/v0.1.3","draft":false,"prerelease":false,
+             "assets":[{"name":"netshield_monitor.zip","browser_download_url":"https://e/zip"},
+                       {"name":"netshield-monitor-v0.1.3.apk","browser_download_url":"https://e/app.apk"}]}
+        """.trimIndent())
+        assertEquals("v0.1.3", r?.version)
+        assertEquals("https://e/app.apk", r?.apkUrl)
+        assertEquals(null, AppUpdate.parseRelease("""{"tag_name":"v1","assets":[]}"""))
     }
 
     @Test fun durations() {
