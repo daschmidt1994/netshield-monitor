@@ -51,6 +51,7 @@ secrets:
 
 volumes:
   netshield_data:
+    name: netshield_data   # fixed name, independent of the directory/project name
 
 networks:
   # The Docker network of your NetBird/CrowdSec stack (to reach crowdsec:8080 / crowdsec:6060).
