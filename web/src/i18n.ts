@@ -27,7 +27,7 @@ const de = {
   heatmap: "Heatmap", mapMode: "Anzeige", recent: "Letzte Requests", originCountries: "Herkunft der Angreifer",
   never: "nie", theme: "Design", language: "Sprache", dark: "Dunkel", light: "Hell", system: "System",
   historyDecisions: "Aktive Entscheidungen im Verlauf", local: "Eigene", community: "Community", alertsTimeline: "Alerts im Verlauf",
-  notConfigured: "nicht konfiguriert", recentNotifications: "Letzte Benachrichtigungen",
+  notConfigured: "nicht konfiguriert", recentNotifications: "Letzte Benachrichtigungen", today: "Heute",
 };
 type Dict = typeof de;
 const en: Dict = {
@@ -57,7 +57,7 @@ const en: Dict = {
   heatmap: "Heatmap", mapMode: "Show", recent: "Recent requests", originCountries: "Attacker origin",
   never: "never", theme: "Theme", language: "Language", dark: "Dark", light: "Light", system: "System",
   historyDecisions: "Active decisions over time", local: "Local", community: "Community", alertsTimeline: "Alerts over time",
-  notConfigured: "not configured", recentNotifications: "Recent notifications",
+  notConfigured: "not configured", recentNotifications: "Recent notifications", today: "Today",
 };
 export const dictionaries = { de, en };
 export type Lang = keyof typeof dictionaries;

@@ -43,7 +43,7 @@ export function Dashboard({ range }: { range: RangeSel }) {
       <div className="stats-grid">
         <Stat label={t("requestsToday")} value={fmtNum(o.requests_today, lang)} sub={`${fmtNum(o.requests_per_minute, lang)} ${t("rpm")}`} />
         <Stat label={t("requests24h")} value={fmtNum(o.requests_24h, lang)} sub={range.key !== "24h" ? `${t("requestsRange")}: ${fmtNum(o.requests.requests, lang)}` : undefined} />
-        <Stat label={t("visitorsEst")} value={fmtNum(o.visitors.value, lang)} hint={t("visitorsHint")} sub={`${t("requestsToday")}: ${fmtNum(o.visitors_today.value, lang)}`} />
+        <Stat label={t("visitorsEst")} value={fmtNum(o.visitors.value, lang)} hint={t("visitorsHint")} sub={`${t("today")}: ${fmtNum(o.visitors_today.value, lang)}`} />
         <Stat label={t("activeDomains")} value={`${o.active_domains} / ${o.known_domains}`} />
         <Stat label={t("blocked")} tone="bad" value={fmtNum(o.requests.blocked + o.requests.challenged, lang)} hint={t("blockedHint")}
           sub={`${t("challenged")}: ${fmtNum(o.requests.challenged, lang)}${o.requests.would_block_observe ? ` · ${t("wouldBlock")}: ${fmtNum(o.requests.would_block_observe, lang)}` : ""}`} />

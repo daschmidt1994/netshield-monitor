@@ -17,7 +17,7 @@ def test_truncation():
 
 def test_internal_networks():
     assert POLICY.is_internal("172.30.0.1")
-    assert POLICY.is_internal("100.112.24.48")
+    assert POLICY.is_internal("100.64.1.2")
     assert POLICY.is_internal("127.0.0.1")
     assert not POLICY.is_internal("198.51.100.1")
     assert not POLICY.is_internal("")

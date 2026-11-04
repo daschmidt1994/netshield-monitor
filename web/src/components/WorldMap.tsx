@@ -12,8 +12,10 @@ export function WorldMap({ rows, metric = "requests", height = 420, onSelect }: 
   useEffect(() => { loadWorld().then(() => setReady(true)); }, []);
   const option = useMemo(() => {
     const c = seriesColors();
-    const data = rows.filter((r) => r.country).map((r) => ({ name: r.country!, value: r[metric], row: r }));
-    const max = Math.max(1, ...data.map((d) => d.value));
+    // square-root scale so one dominant country does not wash out all others; tooltips show real values
+    const data = rows.filter((r) => r.country && r[metric] > 0).map((r) => ({ name: r.country!, value: Math.sqrt(r[metric]), row: r }));
+    const realMax = Math.max(1, ...rows.map((r) => r[metric]));
+    const max = Math.sqrt(realMax);
     const tone = metric === "blocked" ? c.blocked : c.accent;
     return {
       tooltip: {
@@ -24,7 +26,7 @@ export function WorldMap({ rows, metric = "requests", height = 420, onSelect }: 
         },
       },
       visualMap: {
-        min: 0, max, left: 8, bottom: 8, calculable: false, text: [fmtNum(max, lang), "0"], textStyle: { color: c.muted },
+        min: 0, max, left: 8, bottom: 8, calculable: false, text: [fmtNum(realMax, lang), "0"], textStyle: { color: c.muted },
         inRange: { color: [c.grid, tone] }, type: "continuous", itemHeight: 90,
       },
       series: [{
