@@ -72,7 +72,7 @@ jobs:
           rm -f "$RUNNER_TEMP/release.jks"
           # Never publish an unsigned APK: Android refuses to install it and in-app updates would break.
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$RUNNER_TEMP/netshield-monitor-${GITHUB_REF_NAME}.apk"
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: ${{ runner.temp }}/netshield-monitor-${{ github.ref_name }}.apk
           generate_release_notes: true
@@ -82,6 +82,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: cd custom_components/netshield_monitor && zip -r "$RUNNER_TEMP/netshield_monitor.zip" .
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: ${{ runner.temp }}/netshield_monitor.zip
