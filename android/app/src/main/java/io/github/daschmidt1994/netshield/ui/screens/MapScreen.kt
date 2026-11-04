@@ -83,11 +83,13 @@ fun MapScreen(vm: MainViewModel, header: @Composable () -> Unit) {
                             val r = rows.firstOrNull { it.country == cc }
                             Text("${flag(cc)} ${countryName(cc)}: ${fmt(r?.requests ?: 0)} · ${stringResource(R.string.allowed)} ${fmt(r?.allowed ?: 0)} · ${stringResource(R.string.blocked)} ${fmt(r?.blocked ?: 0)}")
                         }
+                        InfoText(stringResource(R.string.map_zoom_hint))
                         InfoText(stringResource(R.string.geo_approx))
                     }
                 }
                 item {
                     SectionCard(stringResource(R.string.top_countries)) {
+                        InfoText(stringResource(R.string.top_countries_legend))
                         val max = rows.maxOfOrNull { it.requests } ?: 0
                         rows.take(30).forEach { c ->
                             BarRow("${flag(c.country)} ${countryName(c.country)}", c.requests, max,

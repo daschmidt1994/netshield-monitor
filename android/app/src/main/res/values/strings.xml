@@ -28,6 +28,8 @@
     <string name="traffic">Traffic</string>
     <string name="top_countries">Top countries</string>
     <string name="geo_approx">GeoIP locations are approximate and not necessarily where a person is.</string>
+    <string name="map_zoom_hint">Pinch to zoom, drag with one finger while zoomed, double-tap to zoom in or reset.</string>
+    <string name="top_countries_legend">Numbers: all requests / of which blocked</string>
     <string name="no_data">No data in range</string>
     <string name="domains">Domains</string>
     <string name="total">Total</string>

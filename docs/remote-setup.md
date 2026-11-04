@@ -16,7 +16,7 @@ NetShield does not have to run on the NetBird/CrowdSec server. A typical setup:
 |---|---|---|
 | NetBird access logs + services | public management URL with the PAT | none |
 | CrowdSec decisions + alerts | NetBird tunnel → LAPI bridge | small bridge container (below) |
-| CrowdSec metrics | not used remotely – decision totals come from the incremental decision stream | none |
+| CrowdSec metrics (optional) | NetBird tunnel → metrics bridge `:18081` | `docker-compose.metrics.yml` (below) |
 | ntfy | public ntfy URL | none |
 
 Advantages: NetShield keeps working (and alerts you) when the VPS is down, data stays at home, the VPS saves RAM.
@@ -41,6 +41,20 @@ docker compose up -d
 docker logs crowdsec-lapi-bridge
 ss -tlnp | grep 18080          # must show <NetBird IP>:18080, NOT 0.0.0.0
 ```
+
+### Optional: CrowdSec metrics
+
+CrowdSec's Prometheus endpoint (`:6060`) is only reachable inside its Docker network. To show parser/scenario/bouncer
+metrics remotely, start the metrics override as well:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/daschmidt1994/netshield-monitor/main/docker/crowdsec-bridge/docker-compose.metrics.yml
+docker compose -f docker-compose.yml -f docker-compose.metrics.yml up -d
+ss -tlnp | grep 18081          # must show <NetBird IP>:18081
+```
+
+Then set `NETSHIELD_CROWDSEC_METRICS_URL=http://<NetBird IP of the VPS>:18081/metrics` and allow TCP 18081 in the
+NetBird policy below.
 
 ### NetBird access policy (important)
 
@@ -96,7 +110,7 @@ NETSHIELD_BIND=0.0.0.0                 # or the Unraid LAN IP
 NETSHIELD_PORT=8090
 NETSHIELD_NETBIRD_URL=https://netbird.example.com
 NETSHIELD_CROWDSEC_LAPI_URL=http://<NetBird IP of the VPS>:18080
-NETSHIELD_CROWDSEC_METRICS_URL=        # empty when remote
+NETSHIELD_CROWDSEC_METRICS_URL=        # optional: http://<NetBird IP of the VPS>:18081/metrics
 NETSHIELD_COOKIE_SECURE=false          # true once the UI is served via HTTPS (NetBird service)
 NETSHIELD_NTFY_URL=https://ntfy.example.com
 NETSHIELD_NTFY_TOPIC=netshield-<random>
