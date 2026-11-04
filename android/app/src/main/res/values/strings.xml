@@ -28,6 +28,16 @@
     <string name="traffic">Traffic</string>
     <string name="top_countries">Top countries</string>
     <string name="geo_approx">GeoIP locations are approximate and not necessarily where a person is.</string>
+    <string name="app_version_title">Version &amp; update</string>
+    <string name="app_version_line">App v%1$s (build %2$d)</string>
+    <string name="server_version_line">Server v%1$s</string>
+    <string name="update_check">Check for updates</string>
+    <string name="update_checking">Checking GitHub …</string>
+    <string name="update_current">The app is up to date.</string>
+    <string name="update_failed">Update check failed: %1$s</string>
+    <string name="update_available">New version available: v%1$s</string>
+    <string name="update_download">Download update</string>
+    <string name="update_install_hint">The APK is downloaded. Then tap the download notification and install it (allow \"Install unknown apps\" the first time).</string>
     <string name="map_zoom_hint">Pinch to zoom, drag with one finger while zoomed, double-tap to zoom in or reset.</string>
     <string name="top_countries_legend">Numbers: all requests / of which blocked</string>
     <string name="no_data">No data in range</string>
