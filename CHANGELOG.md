@@ -2,6 +2,11 @@
 
 All notable changes are documented here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] – 2026-11-04
+
+### Fixed
+- Sanitize NUL bytes in NetBird access-log text fields before PostgreSQL writes so malicious request paths cannot stall the collector.
+
 ## [0.1.0] – 2026-11-04
 
 ### Added

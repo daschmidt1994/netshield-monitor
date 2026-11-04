@@ -1,15 +1,20 @@
 import httpx
 import respx
+from conftest import make_event
 from sqlalchemy import func, select
 
-from conftest import make_event
 from netshield.collectors.crowdsec import (
     CrowdsecAlertsCollector,
     CrowdsecDecisionsCollector,
     LapiClient,
     parse_prometheus,
 )
-from netshield.collectors.netbird import NetBirdAccessLogCollector, NetBirdClient, NetBirdServicesCollector
+from netshield.collectors.netbird import (
+    NetBirdAccessLogCollector,
+    NetBirdClient,
+    NetBirdServicesCollector,
+    normalize_event,
+)
 from netshield.database.models import (
     CollectorState,
     CrowdsecAlert,
@@ -19,6 +24,7 @@ from netshield.database.models import (
     HourlyStat,
     ProxyRequest,
 )
+from netshield.security.privacy import IpPolicy
 
 NB = "https://netbird.example.com"
 CS = "http://crowdsec.test:8080"
@@ -27,6 +33,20 @@ CS = "http://crowdsec.test:8080"
 def page(events, page_no, total_pages):
     return {"data": events, "page": page_no, "page_size": 100, "total_records": len(events) * total_pages,
             "total_pages": total_pages}
+
+
+def test_netbird_normalization_removes_postgres_unsupported_nul_bytes(settings, now):
+    event = make_event(1, now, path="/\x00.aws/\x00credentials", host="app\x00.example.com")
+    event["reason"] = "blocked\x00request"
+
+    policy = IpPolicy(settings.ip_mode, settings.ipv4_prefix, settings.ipv6_prefix, settings.internal_networks)
+    row = normalize_event(event, policy)
+    assert row is not None
+
+    assert row["path"] == "/.aws/credentials"
+    assert row["host"] == "app.example.com"
+    assert row["reason"] == "blockedrequest"
+    assert all("\x00" not in value for value in row.values() if isinstance(value, str))
 
 
 @respx.mock

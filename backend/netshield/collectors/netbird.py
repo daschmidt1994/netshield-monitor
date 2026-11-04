@@ -38,6 +38,16 @@ log = logging.getLogger(__name__)
 PAGE_SIZE = 100
 
 
+def _clean_text(value: object, default: str = "") -> str:
+    """Return external text without NUL bytes unsupported by PostgreSQL."""
+    return str(value or default).replace("\x00", "")
+
+
+def _optional_text(value: object) -> str | None:
+    cleaned = _clean_text(value)
+    return cleaned or None
+
+
 class NetBirdClient:
     def __init__(self, settings: Settings, transport: httpx.AsyncBaseTransport | None = None) -> None:
         self.base = settings.netbird_url
@@ -110,37 +120,38 @@ class SaltCache:
 
 def normalize_event(ev: dict, policy: IpPolicy) -> dict | None:
     ts = parse_rfc3339(ev.get("timestamp"))
-    if ts is None or not ev.get("id"):
+    event_id = _clean_text(ev.get("id"))
+    if ts is None or not event_id:
         return None
     meta = ev.get("metadata") or {}
-    auth = ev.get("auth_method_used") or ""
-    verdict = meta.get("crowdsec_verdict") or (auth if auth.startswith("crowdsec_") else None)
+    auth = _clean_text(ev.get("auth_method_used"))
+    verdict = _optional_text(meta.get("crowdsec_verdict")) or (auth if auth.startswith("crowdsec_") else None)
     observe_only = meta.get("crowdsec_mode") == "observe"
-    raw_ip = ev.get("source_ip") or ""
+    raw_ip = _clean_text(ev.get("source_ip"))
     internal = policy.is_internal(raw_ip)
-    path = (ev.get("path") or "/")[:512]
-    method = (ev.get("method") or ev.get("protocol") or "").upper()[:16]
+    path = _clean_text(ev.get("path"), "/")[:512]
+    method = _clean_text(ev.get("method") or ev.get("protocol")).upper()[:16]
     return {
-        "id": str(ev["id"])[:64],
+        "id": event_id[:64],
         "ts": ts,
-        "service_id": ev.get("service_id"),
-        "host": (ev.get("host") or "unknown").lower()[:255],
+        "service_id": _optional_text(ev.get("service_id")),
+        "host": _clean_text(ev.get("host"), "unknown").lower()[:255],
         "method": method,
         "path": path,
-        "protocol": (ev.get("protocol") or "http")[:8],
+        "protocol": _clean_text(ev.get("protocol"), "http")[:8],
         "status": int(ev.get("status_code") or 0),
         "duration_ms": int(ev.get("duration_ms") or 0),
         "bytes_up": int(ev.get("bytes_upload") or 0),
         "bytes_down": int(ev.get("bytes_download") or 0),
         "ip": policy.display(raw_ip),
-        "country": (ev.get("country_code") or None),
-        "city": (ev.get("city_name") or None),
+        "country": _optional_text(ev.get("country_code")),
+        "city": _optional_text(ev.get("city_name")),
         "authenticated": bool(ev.get("user_id")) or auth in ("oidc", "password", "pin", "header"),
         "verdict": verdict[:32] if verdict else None,
         "observe_only": bool(verdict) and observe_only,
         "category": classify(path=path, method=method, verdict=verdict, observe_only=observe_only,
                              internal=internal),
-        "reason": (ev.get("reason") or None),
+        "reason": _optional_text(ev.get("reason")),
         "_raw_ip": raw_ip,
     }
 
