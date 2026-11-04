@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -23,11 +24,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import io.github.daschmidt1994.netshield.BuildConfig
 import io.github.daschmidt1994.netshield.R
 import io.github.daschmidt1994.netshield.data.AppPrefs
+import io.github.daschmidt1994.netshield.data.AppUpdate
 import io.github.daschmidt1994.netshield.data.Sources
 import io.github.daschmidt1994.netshield.data.db.StoredNotification
 import io.github.daschmidt1994.netshield.ui.LoadState
@@ -50,14 +54,51 @@ fun SettingsScreen(vm: MainViewModel, onLogout: () -> Unit) {
     val sources by rememberLoad(vm, refreshMs = 60_000) { vm.app.repository.load("sources", Sources.serializer()) { sources() } }
     var notes by remember { mutableStateOf<List<StoredNotification>>(emptyList()) }
     LaunchedEffect(Unit) { notes = vm.app.database.cache().notifications(30) }
+    var update by remember { mutableStateOf<UpdateUi>(UpdateUi.Idle) }
+    val uriHandler = LocalUriHandler.current
     val tc = LocalTraffic.current
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             SectionCard(stringResource(R.string.connection)) {
                 Text(conn?.baseUrl ?: "–", fontFamily = FontFamily.Monospace)
-                (sources as? LoadState.Ready)?.value?.data?.version?.let { Text("Backend v$it", style = MaterialTheme.typography.bodySmall) }
                 OutlinedButton(onClick = { scope.launch { store.clear(); vm.app.repository.clearCache(); onLogout() } },
                     modifier = Modifier.padding(top = 8.dp)) { Text(stringResource(R.string.disconnect)) }
+            }
+        }
+        item {
+            SectionCard(stringResource(R.string.app_version_title)) {
+                val current = BuildConfig.VERSION_NAME.removePrefix("v")
+                Text(stringResource(R.string.app_version_line, current, BuildConfig.VERSION_CODE))
+                (sources as? LoadState.Ready)?.value?.data?.version?.takeIf { it.isNotBlank() }?.let {
+                    Text(stringResource(R.string.server_version_line, it), style = MaterialTheme.typography.bodySmall)
+                }
+                when (val u = update) {
+                    UpdateUi.Idle -> {}
+                    UpdateUi.Checking -> InfoText(stringResource(R.string.update_checking))
+                    UpdateUi.Current -> InfoText(stringResource(R.string.update_current))
+                    is UpdateUi.Failed -> ErrorText(stringResource(R.string.update_failed, u.message))
+                    is UpdateUi.Available -> {
+                        Text(stringResource(R.string.update_available, u.release.version.removePrefix("v")),
+                            style = MaterialTheme.typography.bodyMedium)
+                        Button(onClick = { uriHandler.openUri(u.release.apkUrl) }, modifier = Modifier.padding(top = 6.dp)) {
+                            Text(stringResource(R.string.update_download))
+                        }
+                        InfoText(stringResource(R.string.update_install_hint))
+                    }
+                }
+                OutlinedButton(
+                    onClick = {
+                        update = UpdateUi.Checking
+                        scope.launch {
+                            update = runCatching { AppUpdate.fetchLatest() }.fold(
+                                onSuccess = { r -> if (r != null && AppUpdate.isNewer(r.version, current)) UpdateUi.Available(r) else UpdateUi.Current },
+                                onFailure = { e -> UpdateUi.Failed(e.message ?: e::class.java.simpleName) },
+                            )
+                        }
+                    },
+                    enabled = update != UpdateUi.Checking,
+                    modifier = Modifier.padding(top = 8.dp),
+                ) { Text(stringResource(R.string.update_check)) }
             }
         }
         item {
@@ -105,6 +146,14 @@ fun SettingsScreen(vm: MainViewModel, onLogout: () -> Unit) {
             }
         }
     }
+}
+
+private sealed interface UpdateUi {
+    data object Idle : UpdateUi
+    data object Checking : UpdateUi
+    data object Current : UpdateUi
+    data class Available(val release: AppUpdate.Release) : UpdateUi
+    data class Failed(val message: String) : UpdateUi
 }
 
 @Composable

@@ -70,6 +70,8 @@ jobs:
           f=$(ls app/build/outputs/apk/release/*.apk | head -1)
           cp "$f" "$RUNNER_TEMP/netshield-monitor-${GITHUB_REF_NAME}.apk"
           rm -f "$RUNNER_TEMP/release.jks"
+          # Never publish an unsigned APK: Android refuses to install it and in-app updates would break.
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$RUNNER_TEMP/netshield-monitor-${GITHUB_REF_NAME}.apk"
       - uses: softprops/action-gh-release@v2
         with:
           files: ${{ runner.temp }}/netshield-monitor-${{ github.ref_name }}.apk

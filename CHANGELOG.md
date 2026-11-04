@@ -2,6 +2,15 @@
 
 All notable changes are documented here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.1.3] – 2026-11-04
+
+### Added
+- Android: settings show app and server version; "Check for updates" looks up the latest GitHub release and
+  downloads the new APK.
+
+### Fixed
+- Release APKs are now signed; the release workflow fails instead of publishing an unsigned APK.
+
 ## [0.1.2] – 2026-11-04
 
 ### Added
