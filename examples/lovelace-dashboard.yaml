@@ -1,0 +1,69 @@
+# NetShield Monitor – example Home Assistant dashboard (built-in cards only).
+# Replace sensor.netshield_domain_app_example_com with your own per-domain sensors.
+title: NetShield
+views:
+  - title: Übersicht
+    path: netshield
+    icon: mdi:shield-check
+    cards:
+      - type: glance
+        title: Sicherheitsstatus
+        entities:
+          - entity: sensor.netshield_security_status
+            name: Status
+          - entity: binary_sensor.netshield_backend_online
+            name: Backend
+          - entity: binary_sensor.netshield_source_problem
+            name: Datenquellen
+          - entity: binary_sensor.netshield_security_alert
+            name: Alarm
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: entity
+            entity: sensor.netshield_requests_today
+            name: Requests heute
+          - type: entity
+            entity: sensor.netshield_visitors_today
+            name: Besucher (geschätzt)
+          - type: entity
+            entity: sensor.netshield_blocked_requests
+            name: Blockiert 24 h
+          - type: entity
+            entity: sensor.netshield_crowdsec_alerts_24h
+            name: CrowdSec-Alerts 24 h
+          - type: entity
+            entity: sensor.netshield_crowdsec_active_decisions
+            name: Aktive Entscheidungen
+          - type: entity
+            entity: sensor.netshield_top_country
+            name: Top-Land
+      - type: statistics-graph
+        title: Requests & Blockierungen
+        chart_type: line
+        period: hour
+        days_to_show: 7
+        stat_types: [mean]
+        entities:
+          - sensor.netshield_requests_per_minute
+          - sensor.netshield_blocked_requests
+      - type: history-graph
+        title: CrowdSec
+        hours_to_show: 48
+        entities:
+          - sensor.netshield_crowdsec_alerts_24h
+          - sensor.netshield_crowdsec_active_decisions
+      - type: entities
+        title: Domains (Requests 24 h)
+        entities:
+          - sensor.netshield_domain_app_example_com
+          - sensor.netshield_domain_cloud_example_com
+      - type: markdown
+        title: Letzte Meldung
+        content: >
+          **{{ states('sensor.netshield_last_notification') }}**
+
+          {{ state_attr('sensor.netshield_last_notification', 'message') }}
+
+          <small>{{ state_attr('sensor.netshield_last_notification', 'severity') }}</small>

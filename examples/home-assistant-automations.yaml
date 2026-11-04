@@ -1,0 +1,38 @@
+# Example automations for NetShield Monitor (Home Assistant automations.yaml)
+- alias: NetShield – kritischer Sicherheitsalarm aufs Handy
+  triggers:
+    - trigger: event
+      event_type: netshield_monitor_security_alert
+  actions:
+    - action: notify.mobile_app_my_phone   # adjust
+      data:
+        title: "{{ trigger.event.data.title }}"
+        message: "{{ trigger.event.data.message }}"
+        data:
+          priority: high
+
+- alias: NetShield – Backend offline
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.netshield_backend_online
+      to: "off"
+      for: "00:10:00"
+  actions:
+    - action: persistent_notification.create
+      data:
+        title: NetShield Monitor nicht erreichbar
+        message: Das Backend antwortet seit 10 Minuten nicht.
+
+- alias: NetShield – Wohnzimmerlicht rot bei Angriffsspitze
+  triggers:
+    - trigger: event
+      event_type: netshield_monitor_notification
+      event_data:
+        kind: attack_spike
+  actions:
+    - action: light.turn_on
+      target:
+        entity_id: light.living_room   # adjust
+      data:
+        color_name: red
+        flash: short

@@ -1,0 +1,12 @@
+# Excerpt of a NetBird combined server config.yaml (NOT a complete file).
+# Access-log retention and trusted proxies relevant for NetShield Monitor.
+server:
+  reverseProxy:
+    # Traefik (TLS passthrough + PROXY protocol v2) in front of the NetBird proxy
+    trustedHTTPProxies:
+      - "172.30.0.10/32"
+    trustedPeers:
+      - "172.30.0.10/32"
+    # NetBird's own access-log retention. NetShield keeps its own copy, so 7 days is enough.
+    accessLogRetentionDays: 7
+    accessLogCleanupIntervalHours: 24

@@ -1,0 +1,3 @@
+- [ ] Tests added/updated and passing
+- [ ] No secrets, real domains or real IP addresses in code, tests, screenshots or docs
+- [ ] Docs updated (`docs/`, README) if behaviour changed

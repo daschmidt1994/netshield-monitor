@@ -1,0 +1,98 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "NetShield Monitor",
+        "description": "Enter the URL of your NetShield Monitor backend and an API token (scope 'read') created in the web UI under Settings → API tokens.",
+        "data": {
+          "url": "URL",
+          "token": "API token",
+          "verify_ssl": "Verify TLS certificate"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate",
+        "description": "The API token was rejected. Enter a new token.",
+        "data": {
+          "token": "API token"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to NetShield Monitor",
+      "invalid_auth": "Invalid API token",
+      "invalid_url": "URL must start with http:// or https://"
+    },
+    "abort": {
+      "already_configured": "This NetShield instance is already configured",
+      "reauth_successful": "Re-authentication successful"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "data": {
+          "scan_interval": "Update interval (seconds)",
+          "domain_sensors": "Create one sensor per domain"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "requests_today": {
+        "name": "Requests today"
+      },
+      "requests_24h": {
+        "name": "Requests 24h"
+      },
+      "requests_per_minute": {
+        "name": "Requests per minute"
+      },
+      "visitors_today": {
+        "name": "Estimated visitors today"
+      },
+      "blocked_requests": {
+        "name": "Blocked requests"
+      },
+      "crowdsec_active_decisions": {
+        "name": "CrowdSec active decisions"
+      },
+      "crowdsec_alerts_24h": {
+        "name": "CrowdSec alerts 24h"
+      },
+      "top_country": {
+        "name": "Top country"
+      },
+      "active_domains": {
+        "name": "Active domains"
+      },
+      "security_status": {
+        "name": "Security status",
+        "state": {
+          "ok": "OK",
+          "warning": "Warning",
+          "critical": "Critical"
+        }
+      },
+      "last_notification": {
+        "name": "Last notification"
+      },
+      "domain_requests": {
+        "name": "{domain}"
+      }
+    },
+    "binary_sensor": {
+      "backend_online": {
+        "name": "Backend online"
+      },
+      "security_alert": {
+        "name": "Security alert"
+      },
+      "source_problem": {
+        "name": "Data source problem"
+      }
+    }
+  }
+}

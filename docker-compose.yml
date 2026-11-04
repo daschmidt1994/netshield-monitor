@@ -1,0 +1,59 @@
+# NetShield Monitor – default deployment next to NetBird + CrowdSec.
+# 1. cp .env.example .env   2. put secrets into ./secrets/ (see docs/installation.md)   3. docker compose up -d
+services:
+  netshield:
+    image: ghcr.io/daschmidt1994/netshield-monitor:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: netshield-monitor
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NETSHIELD_NETBIRD_TOKEN_FILE: /run/secrets/netbird_token
+      NETSHIELD_CROWDSEC_BOUNCER_KEY_FILE: /run/secrets/crowdsec_bouncer_key
+      NETSHIELD_CROWDSEC_MACHINE_PASSWORD_FILE: /run/secrets/crowdsec_machine_password
+      NETSHIELD_NTFY_TOKEN_FILE: /run/secrets/ntfy_token
+    secrets:
+      - netbird_token
+      - crowdsec_bouncer_key
+      - crowdsec_machine_password
+      - ntfy_token
+    volumes:
+      - netshield_data:/data
+    # Only reachable from the host by default. Publish it through the NetBird reverse proxy
+    # (recommended) or another TLS-terminating proxy instead of opening the port publicly.
+    ports:
+      - "127.0.0.1:${NETSHIELD_PORT:-8090}:8080"
+    networks:
+      - default
+      - netbird
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+secrets:
+  netbird_token:
+    file: ./secrets/netbird_token
+  crowdsec_bouncer_key:
+    file: ./secrets/crowdsec_bouncer_key
+  crowdsec_machine_password:
+    file: ./secrets/crowdsec_machine_password
+  ntfy_token:
+    file: ./secrets/ntfy_token
+
+volumes:
+  netshield_data:
+
+networks:
+  # The Docker network of your NetBird/CrowdSec stack (to reach crowdsec:8080 / crowdsec:6060).
+  netbird:
+    external: true
+    name: ${NETSHIELD_EXTERNAL_NETWORK:-netbird_netbird}

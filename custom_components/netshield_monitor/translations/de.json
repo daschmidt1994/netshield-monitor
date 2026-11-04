@@ -1,0 +1,98 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "NetShield Monitor",
+        "description": "Gib die URL deines NetShield-Monitor-Backends und einen API-Token (Berechtigung 'read') ein. Tokens erstellst du in der Weboberfläche unter Einstellungen → API-Tokens.",
+        "data": {
+          "url": "URL",
+          "token": "API-Token",
+          "verify_ssl": "TLS-Zertifikat prüfen"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Neu anmelden",
+        "description": "Der API-Token wurde abgelehnt. Bitte gib einen neuen Token ein.",
+        "data": {
+          "token": "API-Token"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Keine Verbindung zu NetShield Monitor",
+      "invalid_auth": "Ungültiger API-Token",
+      "invalid_url": "Die URL muss mit http:// oder https:// beginnen"
+    },
+    "abort": {
+      "already_configured": "Diese NetShield-Instanz ist bereits eingerichtet",
+      "reauth_successful": "Erneute Anmeldung erfolgreich"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Optionen",
+        "data": {
+          "scan_interval": "Aktualisierungsintervall (Sekunden)",
+          "domain_sensors": "Einen Sensor pro Domain anlegen"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "requests_today": {
+        "name": "Requests heute"
+      },
+      "requests_24h": {
+        "name": "Requests 24h"
+      },
+      "requests_per_minute": {
+        "name": "Requests pro Minute"
+      },
+      "visitors_today": {
+        "name": "Geschätzte Besucher heute"
+      },
+      "blocked_requests": {
+        "name": "Blockierte Requests"
+      },
+      "crowdsec_active_decisions": {
+        "name": "CrowdSec aktive Entscheidungen"
+      },
+      "crowdsec_alerts_24h": {
+        "name": "CrowdSec Alerts 24h"
+      },
+      "top_country": {
+        "name": "Top-Land"
+      },
+      "active_domains": {
+        "name": "Aktive Domains"
+      },
+      "security_status": {
+        "name": "Sicherheitsstatus",
+        "state": {
+          "ok": "OK",
+          "warning": "Warnung",
+          "critical": "Kritisch"
+        }
+      },
+      "last_notification": {
+        "name": "Letzte Benachrichtigung"
+      },
+      "domain_requests": {
+        "name": "{domain}"
+      }
+    },
+    "binary_sensor": {
+      "backend_online": {
+        "name": "Backend online"
+      },
+      "security_alert": {
+        "name": "Sicherheitsalarm"
+      },
+      "source_problem": {
+        "name": "Problem mit Datenquelle"
+      }
+    }
+  }
+}
