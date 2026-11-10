@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from sqlalchemy import select
 
 from .. import __version__
@@ -28,7 +28,15 @@ async def health(request: Request):
         db_ok = True
     except Exception:
         db_ok = False
-    return {"status": "ok" if db_ok else "degraded", "version": __version__, "time": now_ts()}
+    # A started collector whose loop task has ended no longer collects anything. Answer 503 so
+    # the container healthcheck turns unhealthy instead of hiding a dead collector for days.
+    collectors_ok = all(
+        c.alive for c in getattr(request.app.state, "collectors", []) if getattr(c, "_task", None) is not None
+    )
+    body = {"status": "ok" if db_ok and collectors_ok else "degraded", "version": __version__, "time": now_ts()}
+    if not collectors_ok:
+        return JSONResponse(body, status_code=503)
+    return body
 
 
 @router.get("/sources", tags=["system"])

@@ -2,6 +2,16 @@
 
 All notable changes are documented here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.1.4] – 2026-11-10
+
+### Fixed
+- Collectors no longer die when the database is briefly unreachable (e.g. PostgreSQL restarting during a
+  container update): a failed state write is logged instead of ending the collector loop, and the loop itself
+  survives any unexpected error. Previously the NetBird access-log collector stopped silently and all traffic
+  statistics fell to zero until the container was restarted.
+- `/api/v1/health` answers `503` (`status: degraded`) when a started collector is no longer running, so the
+  container healthcheck turns unhealthy instead of hiding a dead collector.
+
 ## [0.1.3] – 2026-11-04
 
 ### Added

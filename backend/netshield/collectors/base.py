@@ -67,21 +67,35 @@ class Collector:
             await s.commit()
 
     # --- loop ----------------------------------------------------------------
+    @property
+    def alive(self) -> bool:
+        """True while the background loop task is running."""
+        return self._task is not None and not self._task.done()
+
+    async def _mark_safe(self, ok: bool, **kwargs) -> None:
+        # Recording the state needs the database. If it is down (e.g. PostgreSQL restarting
+        # during an update), a failure here must not escape and end the collector loop.
+        try:
+            await self._mark(ok, **kwargs)
+        except Exception:
+            log.warning("collector %s: could not record state (database unavailable?)", self.name,
+                        exc_info=True)
+
     async def run_safe(self) -> int:
         try:
             n = await self.run_once()
         except CollectorError as exc:
             self._failures += 1
             log.warning("collector %s failed: %s", self.name, exc)
-            await self._mark(False, error=str(exc))
+            await self._mark_safe(False, error=str(exc))
             return 0
         except Exception as exc:  # keep the loop alive on unexpected errors
             self._failures += 1
             log.exception("collector %s crashed", self.name)
-            await self._mark(False, error=f"{type(exc).__name__}: {exc}")
+            await self._mark_safe(False, error=f"{type(exc).__name__}: {exc}")
             return 0
         self._failures = 0
-        await self._mark(True, items=n, status=getattr(self, "_status_override", None))
+        await self._mark_safe(True, items=n, status=getattr(self, "_status_override", None))
         if n:
             for cb in self.listeners:
                 try:
@@ -94,7 +108,11 @@ class Collector:
         # small jitter so collectors don't all fire at the same moment
         await asyncio.sleep(random.uniform(0, 2))  # noqa: S311 - not security relevant
         while not self._stop.is_set():
-            await self.run_safe()
+            try:
+                await self.run_safe()
+            except Exception:  # last line of defence: never let the loop task die
+                self._failures += 1
+                log.exception("collector %s: unexpected error in loop", self.name)
             delay = self.interval
             if self._failures:
                 delay = min(self.interval * (2 ** min(self._failures, 5)), 900)
