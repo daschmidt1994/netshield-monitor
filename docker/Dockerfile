@@ -8,7 +8,7 @@ COPY web/ ./
 RUN npx tsc --noEmit && npx vite build --outDir /web/dist
 
 # ---- Stage 2: Python runtime ---------------------------------------------------
-FROM python:3.13-slim AS runtime
+FROM python:3.15-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 WORKDIR /app
 COPY backend/pyproject.toml ./
